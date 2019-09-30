@@ -1,0 +1,51 @@
+new-line = '\n' | Epsilon
+colon = <':'>
+open-curly = <'{'>
+close-curly = <'};'>
+<semiColon> = <';'>
+<space> = <#'[ \t\n,]+'>
+<optional-space> = <#'[ \t\n]*'>
+<letter> 	     = #'[A-Za-z]'
+decimalDigit = #'[0-9]'
+octalDigit   = #'[0-7]'
+hexDigit     = #'[0-9a-fA-F]'
+intLit     = decimalLit | octalLit | hexLit
+decimalLit = #'[1-9]' { decimalDigit }
+octalLit   = "0" { octalDigit }
+hexLit     = "0" ( "x" | "X" ) hexDigit { hexDigit }
+
+strLit = ( <"\'"> { charValue } <"\'"> ) |  ( <'\"'> { charValue } <'\"'> ) 
+charValue = hexEscape | octEscape | charEscape  | #"[^\\0\n]"
+hexEscape = <'\\'> ( "x" | "X" ) hexDigit hexDigit   
+octEscape = <'\\'> octalDigit octalDigit octalDigit
+charEscape = <'\\'> ( "a" | "b" | "f" | "n" | "r" | "t" | "v" | '\\' | "\'" | '\"' ) 
+quote = <"\'"> | <'\"'>
+
+ident = letter { letter | decimalDigit | "_" }
+type = 'ascii' | 'int' | 'byte' | 'bcd'
+aplExpression = decimalDigit | ident
+aplBooleanExpression = 'true'
+dynamicSizeExpr = aplExpression
+presentIf = <'present'> space <'if'> optional-space <'('> aplBooleanExpression optional-space <')'>
+dynamic_size = <'dynamic_size'> optional-space <'('> optional-space dynamicSizeExpr optional-space <')'>
+bit_block_static_size = <'static_size'> optional-space <'('> optional-space intLit optional-space <')'>
+bit_blockSize = dynamic_size | bit_block_static_size
+bit_size = <'bit_size'> optional-space <'('> optional-space intLit optional-space <')'>
+align = <'align'> optional-space <'('> optional-space ('right' | 'left') optional-space <')'>
+padded_with = <'padded_with'> optional-space <'('> optional-space (intLit  | strLit) optional-space <')'>
+terminated_by = <'terminated_by'> optional-space <'('> optional-space (intLit  | strLit) optional-space <')'>
+base = 'base10' | 'base16'
+encoding = ('float' | 'double' | 'bigdec') | ('byte' | 'short' | 'int' | 'long' | 'bigint' ) optional-space <'('> optional-space base optional-space <')'>
+native_size = <'native_size'> optional-space <'('> optional-space aplExpression optional-space <')'>
+field-property = bit_size | presentIf | encode_value | align | padded_with | terminated_by | encoding | static_size | native_size | dynamic_size
+field-properties = field-property (optional-space <','> optional-space field-property)*
+field = type space ident optional-space (semiColon | (colon optional-space field-properties optional-space semiColon))
+
+bitBlock = open-curly optional-space field* optional-space close-curly
+bit_block = <'bit_block'> optional-space colon optional-space bit_blockSize optional-space bitBlock
+encode_value = <'encode_value'> optional-space <'('> optional-space intLit | 'udr_size' optional-space <')'>
+static_size = <'static_size'> optional-space <'('> optional-space intLit optional-space <')'>
+
+externalBlock = open-curly (optional-space (field | bit_block))* optional-space close-curly
+externalSize = dynamic_size | static_size
+external = <'external'> space ident optional-space (externalBlock | (colon optional-space (externalSize | terminated_by) optional-space externalBlock)) 
