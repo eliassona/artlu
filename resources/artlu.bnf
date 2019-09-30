@@ -1,5 +1,7 @@
+artlu = (external | in_map | out_map | decoder | encoder)*
+
 new-line = '\n' | Epsilon
-colon = <':'>
+<colon> = <':'>
 open-curly = <'{'>
 close-curly = <'};'>
 <semiColon> = <';'>
@@ -12,7 +14,7 @@ hexDigit     = #'[0-9a-fA-F]'
 intLit     = decimalLit | octalLit | hexLit
 decimalLit = #'[1-9]' { decimalDigit }
 octalLit   = "0" { octalDigit }
-hexLit     = "0" ( "x" | "X" ) hexDigit { hexDigit }
+hexLit     = <"0"> <( "x" | "X" )> hexDigit { hexDigit }
 
 strLit = ( <"\'"> { charValue } <"\'"> ) |  ( <'\"'> { charValue } <'\"'> ) 
 charValue = hexEscape | octEscape | charEscape  | #"[^\n]"
@@ -33,7 +35,9 @@ left-shift = aplExpression optional-space <'<<'> optional-space aplExpression
 bit-and = aplExpression optional-space <'&'> optional-space aplExpression
 bit-or = aplExpression optional-space <'|'> optional-space aplExpression
 paren-expr = <'('> optional-space aplExpression optional-space <')'>
-aplExpression = strLit | intLit | ident | addition | subtraction | multiplication | division | paren-expr | right-shift | bit-and | bit-or
+fn-call = ident optional-space <'('> (optional-space [aplExpression] optional-space) (optional-space <','> optional-space aplExpression optional-space)* <')'>
+if-expr = aplBooleanExpression optional-space <'?'> optional-space aplExpression optional-space <colon> optional-space aplExpression
+aplExpression = fn-call | strLit | intLit | ident | addition | subtraction | multiplication | division | paren-expr | right-shift | bit-and | bit-or | if-expr
 
 equals = aplExpression optional-space <'=='> optional-space aplExpression
 gt = aplExpression optional-space <'>'> optional-space aplExpression
@@ -42,11 +46,10 @@ lt = aplExpression optional-space <'<'> optional-space aplExpression
 lte = aplExpression optional-space <'<='> optional-space aplExpression
 or = aplExpression optional-space <'||'> optional-space aplExpression
 and = aplExpression optional-space <'&&'> optional-space aplExpression
-if-expr = aplBooleanExpression optional-space <'?'> optional-space aplExpression optional-space <colon> optional-space aplExpression
 boolean = 'true' | 'false'
 
 
-aplBooleanExpression = boolean | equals | gt | lt | gte | lte | or | and | if-expr
+aplBooleanExpression = boolean | equals | gt | lt | gte | lte | or | and | fn-call | ident
 
 dynamicSizeExpr = aplExpression
 presentIf = <'present'> space <'if'> optional-space <'('> optional-space aplBooleanExpression optional-space <')'>
@@ -65,7 +68,7 @@ msb = <'msb'> <'('> optional-space aplExpression optional-space <')'>
 lsb = <'lsb'> <'('> optional-space aplExpression optional-space <')'>
 field-property = bit_size | presentIf | encode_value | align | padded_with | terminated_by | encoding | static_size | native_size | dynamic_size | byte_alignment | msb | lsb
 field-properties = field-property (optional-space <','> optional-space field-property)*
-field = type space ident optional-space (semiColon | (colon optional-space field-properties optional-space semiColon))
+field = type space ident optional-space (semiColon | (<colon> optional-space field-properties optional-space semiColon))
 
 bitBlock = open-curly (optional-space field)* optional-space close-curly
 bitBlock-property = bit_blockSize | presentIf
@@ -75,4 +78,30 @@ static_size = <'static_size'> optional-space <'('> optional-space intLit optiona
 
 externalBlock = open-curly (optional-space (field | bit_block))* optional-space close-curly
 externalSize = dynamic_size | static_size
-external = <'external'> space ident optional-space (externalBlock | (colon optional-space (externalSize | terminated_by) optional-space externalBlock)) optional-space 
+external = <'external'> space ident optional-space (externalBlock | (colon optional-space (externalSize | terminated_by) optional-space externalBlock)) optional-space
+
+
+
+in_map = <'in_map'> space ident optional-space colon optional-space 
+         <'external'> optional-space <'('> optional-space ident optional-space 
+         <')'> optional-space <','> optional-space 'target_internal' 
+         optional-space <'('> optional-space ident optional-space <')'>
+         optional-space open-curly optional-space 'automatic;' optional-space close-curly  
+
+decoder = <'decoder'> optional-space ident optional-space colon optional-space
+          <'in_map'> optional-space <'('> optional-space ident optional-space 
+         <');'>  
+
+out_map = <'out_map'> space ident optional-space colon optional-space 
+         <'external'> optional-space <'('> optional-space ident optional-space 
+         <')'> optional-space <','> optional-space 'internal' 
+         optional-space <'('> optional-space ident optional-space <')'>
+         optional-space open-curly optional-space 'automatic;' optional-space close-curly  
+ 
+encoder = <'encoder'> optional-space ident optional-space colon optional-space
+          <'out_map'> optional-space <'('> optional-space ident optional-space 
+         <');'> 
+         
+          
+ 
+ 

@@ -16,6 +16,10 @@
 (def ast->clj-map
   {:charValue identity
    :strLit (partial apply str)
+   :octalLit (fn [& args] (str "0" (apply str args)))
+   :octalDigit identity
+   :hexLit (fn [& args] (str "0x" (apply str args)))
+   :hexDigit identity
    :decimalDigit identity
    :decimalLit (fn [& args] (apply str args))
    :intLit read-string
@@ -35,6 +39,7 @@
    :lt (fn [& args] `(< ~@args))
    :lte (fn [& args] `(<= ~@args))
    :if-expr (fn [condition if-value else-value] `(if ~condition ~if-value ~else-value))
+   :ident (fn [& args] (apply str args))
    })
 
 (defn ast->clj [ast]
