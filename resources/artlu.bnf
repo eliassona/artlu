@@ -42,7 +42,7 @@ lt = aplExpression optional-space <'<'> optional-space aplExpression
 lte = aplExpression optional-space <'<='> optional-space aplExpression
 or = aplExpression optional-space <'||'> optional-space aplExpression
 and = aplExpression optional-space <'&&'> optional-space aplExpression
-if-expr = aplBooleanExpression optional-space <'?'> optional-space aplExpression optional-space colon optional-space aplExpression
+if-expr = aplBooleanExpression optional-space <'?'> optional-space aplExpression optional-space <colon> optional-space aplExpression
 boolean = 'true' | 'false'
 
 
