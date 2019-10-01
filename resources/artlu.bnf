@@ -1,4 +1,4 @@
-artlu = (optional-space (external | in_map | out_map | decoder | encoder | internal | event) optional-space)*
+artlu = (os (external | in_map | out_map | decoder | encoder | internal | event) os)*
 
 new-line = '\n' | Epsilon
 <colon> = <':'>
@@ -6,13 +6,13 @@ open-curly = <'{'>
 close-curly = <'};'>
 <semiColon> = <';'>
 <space> = <#'[ \t\n,]+'>
-<optional-space> = <#'[ \t\n]*'>
+<os> = <#'[ \t\n]*'>
 <letter> 	     = #'[A-Za-z]'
 decimalDigit = #'[0-9]'
 octalDigit   = #'[0-7]'
 hexDigit     = #'[0-9a-fA-F]'
 sign = '+' | '-'
-intLit     = [sign optional-space] (decimalLit | octalLit | hexLit)
+intLit     = [sign os] (decimalLit | octalLit | hexLit)
 decimalLit = #'[1-9]' { decimalDigit }
 octalLit   = "0" { octalDigit }
 hexLit     = <"0"> <( "x" | "X" )> hexDigit { hexDigit }
@@ -25,121 +25,126 @@ charEscape = <'\\'> ( "a" | "b" | "f" | "n" | "r" | "t" | "v" | '\\' | "\'" | '\
 quote = <"\'"> | <'\"'>
 
 ident = letter { letter | decimalDigit | "_" }
-bcd = <'bcd'> [optional-space <'('> optional-space ident optional-space <')'>]
-endian-type = [optional-space <'('> optional-space (little_endian | big_endian) optional-space <')'>]
+bcd = <'bcd'> [os <'('> os ident os <')'>]
+endian-type = [os <'('> os (little_endian | big_endian) os <')'>]
 int = <'int'> endian-type
 byte = <'byte'> endian-type
 short = <'short'> endian-type
 long = <'long'> endian-type
 bigint = <'bigint'> endian-type
-type = 'double' | 'float' | 'ascii' | int | byte | bcd | short | long | bigint | 'bytearray' | ident
+type = list | 'double' | 'float' | 'ascii' | int | byte | bcd | short | long | bigint | 'bytearray' | ident
 
-addition = aplExpression optional-space <'+'> optional-space  aplExpression
-subtraction = aplExpression optional-space <'-'> optional-space  aplExpression
-multiplication = aplExpression optional-space <'*'> optional-space  aplExpression
-division = aplExpression optional-space <'/'> optional-space  aplExpression
-right-shift = aplExpression optional-space <'>>'> optional-space aplExpression
-left-shift = aplExpression optional-space <'<<'> optional-space aplExpression
-bit-and = aplExpression optional-space <'&'> optional-space aplExpression
-bit-or = aplExpression optional-space <'|'> optional-space aplExpression
-paren-expr = <'('> optional-space aplExpression optional-space <')'>
-fn-call = ident optional-space <'('> (optional-space [aplExpression] optional-space) (optional-space <','> optional-space aplExpression optional-space)* <')'>
-if-expr = aplBooleanExpression optional-space <'?'> optional-space aplExpression optional-space <colon> optional-space aplExpression
-type-cast = <'('> optional-space ident optional-space <')'> optional-space aplExpression
+addition = aplExpression os <'+'> os  aplExpression
+subtraction = aplExpression os <'-'> os  aplExpression
+multiplication = aplExpression os <'*'> os  aplExpression
+division = aplExpression os <'/'> os  aplExpression
+right-shift = aplExpression os <'>>'> os aplExpression
+left-shift = aplExpression os <'<<'> os aplExpression
+bit-and = aplExpression os <'&'> os aplExpression
+bit-or = aplExpression os <'|'> os aplExpression
+paren-expr = <'('> os aplExpression os <')'>
+fn-call = ident os <'('> (os [aplExpression] os) (os <','> os aplExpression os)* <')'>
+if-expr = aplBooleanExpression os <'?'> os aplExpression os <colon> os aplExpression
+type-cast = <'('> os ident os <')'> os aplExpression
 aplExpression = fn-call | strLit | intLit | ident | addition | subtraction | multiplication | division | paren-expr | right-shift | bit-and | bit-or | if-expr | type-cast
 
-equals = aplExpression optional-space <'=='> optional-space aplExpression
-not-equals = aplExpression optional-space <'!='> optional-space aplExpression
-gt = aplExpression optional-space <'>'> optional-space aplExpression
-gte = aplExpression optional-space <'>='> optional-space aplExpression
-lt = aplExpression optional-space <'<'> optional-space aplExpression
-lte = aplExpression optional-space <'<='> optional-space aplExpression
-or = aplExpression optional-space <'||'> optional-space aplExpression
-and = aplExpression optional-space <'&&'> optional-space aplExpression
+equals = aplExpression os <'=='> os aplExpression
+not-equals = aplExpression os <'!='> os aplExpression
+gt = aplExpression os <'>'> os aplExpression
+gte = aplExpression os <'>='> os aplExpression
+lt = aplExpression os <'<'> os aplExpression
+lte = aplExpression os <'<='> os aplExpression
+or = aplExpression os <'||'> os aplExpression
+and = aplExpression os <'&&'> os aplExpression
 boolean = 'true' | 'false'
 
 
 aplBooleanExpression = not-equals | boolean | equals | gt | lt | gte | lte | or | and | fn-call | ident
 
 dynamicSizeExpr = aplExpression
-presentIf = <'present'> space <'if'> optional-space <'('> optional-space aplBooleanExpression optional-space <')'>
-dynamic_size = <'dynamic_size'> optional-space <'('> optional-space dynamicSizeExpr optional-space <')'>
-bit_block_static_size = <'static_size'> optional-space <'('> optional-space intLit optional-space <')'>
+presentIf = <'present'> space <'if'> os <'('> os aplBooleanExpression os <')'>
+dynamic_size = <'dynamic_size'> os <'('> os dynamicSizeExpr os <')'>
+bit_block_static_size = <'static_size'> os <'('> os intLit os <')'>
 bit_blockSize = dynamic_size | bit_block_static_size
-bit_size = <'bit_size'> optional-space <'('> optional-space aplExpression optional-space <')'>
-align = <'align'> optional-space <'('> optional-space ('right' | 'left') optional-space <')'>
-padded_with = <'padded_with'> optional-space <'('> optional-space (intLit  | strLit) optional-space <')'>
-terminated_by = <'terminated_by'> optional-space <'('> optional-space (intLit  | strLit) optional-space <')'>
-identified_by = <'identified_by'> optional-space <'('> optional-space (aplBooleanExpression) optional-space <')'>
+bit_size = <'bit_size'> os <'('> os aplExpression os <')'>
+align = <'align'> os <'('> os ('right' | 'left') os <')'>
+padded_with = <'padded_with'> os <'('> os (intLit  | strLit) os <')'>
+terminated_by = <'terminated_by'> os <'('> os (intLit  | strLit) os <')'>
+identified_by = <'identified_by'> os <'('> os (aplBooleanExpression) os <')'>
 base = 'base10' | 'base16'
-encoding = ('float' | 'double' | 'bigdec') | ('byte' | 'short' | 'int' | 'long' | 'bigint' ) optional-space <'('> optional-space base optional-space <')'>
-native_size = <'native_size'> optional-space <'('> optional-space aplExpression optional-space <')'>
-byte_alignment = <'byte_alignment'> <'('> optional-space aplExpression optional-space <')'>
-msb = <'msb'> <'('> optional-space aplExpression optional-space <')'>
-lsb = <'lsb'> <'('> optional-space aplExpression optional-space <')'>
+encoding = ('float' | 'double' | 'bigdec') | ('byte' | 'short' | 'int' | 'long' | 'bigint' ) os <'('> os base os <')'>
+native_size = <'native_size'> os <'('> os aplExpression os <')'>
+byte_alignment = <'byte_alignment'> <'('> os aplExpression os <')'>
+msb = <'msb'> <'('> os aplExpression os <')'>
+lsb = <'lsb'> <'('> os aplExpression os <')'>
 signed = <'signed'>
 little_endian = <'little_endian'>
 big_endian = <'big_endian'>
 external_only = <'external_only'>
 unsigned = <'unsigned'> 
-field-property = unsigned | external_only | little_endian | big_endian | signed | bit_size | presentIf | encode_value | align | padded_with | terminated_by | encoding | static_size | native_size | dynamic_size | byte_alignment | msb | lsb
-field-properties = field-property (optional-space <','> optional-space field-property)*
-field = type space ident optional-space (semiColon | (<colon> optional-space field-properties optional-space semiColon))
+element_count = <'element_count'> <'('> os aplExpression os <')'>
+field-property = element_count | unsigned | external_only | little_endian | big_endian | signed | bit_size | presentIf | encode_value | align | padded_with | terminated_by | encoding | static_size | native_size | dynamic_size | byte_alignment | msb | lsb
+field-properties = field-property (os <','> os field-property)*
+field = type space ident os (semiColon | (<colon> os field-properties os semiColon))
 
-case = <'case'> optional-space <'('> optional-space aplExpression optional-space <')'> optional-space externalBlock
-default = <'default'> optional-space colon optional-space 'include_prefix' optional-space externalBlock
-cases = (optional-space case)* optional-space [default]
-switched_set-block = open-curly (optional-space (field | bit_block))* cases optional-space close-curly
-switched_set_properties = colon optional-space external-properties
-switched_set = <'switched_set'> optional-space  <'('> optional-space ident optional-space <')'> optional-space [switched_set_properties] optional-space switched_set-block
-repeat_block = <'repeat_block'> optional-space <'('> optional-space aplExpression optional-space <')'> optional-space bitBlock
+case = <'case'> os <'('> os aplExpression os <')'> os externalBlock
+default = <'default'> os colon os 'include_prefix' os externalBlock
+cases = (os case)* os [default]
+switched_set-block = open-curly (os (field | bit_block))* cases os close-curly
+switched_set_properties = colon os external-properties
+switched_set = <'switched_set'> os  <'('> os ident os <')'> os [switched_set_properties] os switched_set-block
+repeat_block = <'repeat_block'> os <'('> os aplExpression os <')'> os bitBlock
 
 
-bitBlock = open-curly (optional-space (field | repeat_block))* optional-space close-curly
+bitBlock = open-curly (os (field | repeat_block))* os close-curly
 bitBlock-property = bit_blockSize | presentIf
-bit_block = <'bit_block'> optional-space colon optional-space bitBlock-property (optional-space <','> optional-space bitBlock-property)* optional-space bitBlock
-encode_value = <'encode_value'> optional-space <'('> optional-space aplExpression optional-space <')'>
-static_size = <'static_size'> optional-space <'('> optional-space intLit optional-space <')'>
-block_size = <'block_size'> optional-space <'('> optional-space intLit optional-space <')'>
+bit_block = <'bit_block'> os colon os bitBlock-property (os <','> os bitBlock-property)* os bitBlock
+encode_value = <'encode_value'> os <'('> os aplExpression os <')'>
+static_size = <'static_size'> os <'('> os intLit os <')'>
+block_size = <'block_size'> os <'('> os intLit os <')'>
 
-externalBlock = open-curly (optional-space (switched_set | field | bit_block))* optional-space close-curly
+externalBlock = open-curly (os (switched_set | field | bit_block))* os close-curly
 externalSize = dynamic_size | static_size
 external-property = externalSize | terminated_by | identified_by | padded_with
-external-properties = external-property (optional-space <','> optional-space external-property)*
-external = <'external'> space ident [space 'sequential'] optional-space (externalBlock | (colon optional-space external-properties optional-space externalBlock)) optional-space
+external-properties = external-property (os <','> os external-property)*
+external = <'external'> space ident [space 'sequential'] os (externalBlock | (colon os external-properties os externalBlock)) os
+
+internal-mapping = 'internal' | 'target_internal'
+
+ext-int-arg = <'('> os ident os <')'>
+ext-int-mapping = ('external' os ext-int-arg os <','> os internal-mapping os ext-int-arg) |
+                  (internal-mapping os ext-int-arg os <','> os 'external' os ext-int-arg)
+
+
+in_map = <'in_map'> space ident os colon os 
+         ext-int-mapping
+         os open-curly os 'automatic;' os close-curly  
+
+
+decoder-in_map = <'in_map'> os <'('> os ident os <')'>
+decoders-in_map = decoder-in_map (os <','> os decoder-in_map)* os semiColon
+decoder-ref = <'decoder'> space ident [space '*'] os semiColon
+decoder-refs = (os decoder-ref)*
+decoder-block = open-curly decoder-refs os close-curly
+decoder = <'decoder'> os ident os ((colon os decoders-in_map) | decoder-block)  
 
 
 
-in_map = <'in_map'> space ident optional-space colon optional-space 
-         <'external'> optional-space <'('> optional-space ident optional-space 
-         <')'> optional-space <','> optional-space 'target_internal' 
-         optional-space <'('> optional-space ident optional-space <')'>
-         optional-space open-curly optional-space 'automatic;' optional-space close-curly  
-
-
-decoder-in_map = <'in_map'> optional-space <'('> optional-space ident optional-space <')'>
-decoders-in_map = decoder-in_map (optional-space <','> optional-space decoder-in_map)* optional-space semiColon
-decoder-ref = <'decoder'> space ident [space '*'] optional-space semiColon
-decoder-refs = (optional-space decoder-ref)*
-decoder-block = open-curly decoder-refs optional-space close-curly
-decoder = <'decoder'> optional-space ident optional-space ((colon optional-space decoders-in_map) | decoder-block)  
-
-out_map = <'out_map'> space ident optional-space colon optional-space 
-         <'external'> optional-space <'('> optional-space ident optional-space 
-         <')'> optional-space <','> optional-space 'internal' 
-         optional-space <'('> optional-space ident optional-space <')'>
-         optional-space open-curly optional-space 'automatic;' optional-space close-curly  
+out_map = <'out_map'> space ident os colon os 
+         ext-int-mapping
+         os open-curly os 'automatic;' os close-curly  
  
-encoder = <'encoder'> optional-space ident optional-space colon optional-space
-          <'out_map'> optional-space <'('> optional-space ident optional-space 
-         <')'> (optional-space <','> optional-space (block_size | terminated_by))* semiColon 
+encoder-out_map = <'out_map'> os <'('> os ident os <')'>
+encoders-out_map = encoder-out_map (os <','> os encoder-out_map)* os semiColon
+encoder = <'encoder'> os ident os ((colon os encoders-out_map))  
 
 
-list = <'list'> optional-space <'<'> optional-space internal-type  optional-space <'>'>
-map = <'map'> optional-space <'<'> optional-space internal-type  optional-space <','> optional-space internal-type optional-space <'>'>
+list = <'list'> os <'<'> os internal-type  os <'>'>
+map = <'map'> os <'<'> os internal-type  os <','> os internal-type os <'>'>
          
 internal-type = 'double' | 'float' | 'int' | 'byte' | short | 'long' | 'bigint' | 'bytearray' | ident | list | map
-internal-field = internal-type space ident optional-space semiColon          
-internalBlock = open-curly (optional-space | (optional-space internal-field)*) optional-space  close-curly 
-internal = <'internal'> space ident optional-space internalBlock  
-event = <'event'> space ident optional-space internalBlock  
+internal-field = internal-type space ident [os colon os 'optional'] os semiColon          
+internalBlock = open-curly (os | (os internal-field)*) os  close-curly
+extends = <'extends'> os <'('> os ident os <')'> 
+internal = <'internal'> space ident [os colon os extends] os internalBlock  
+event = <'event'> space ident os internalBlock  
