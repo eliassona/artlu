@@ -1,4 +1,4 @@
-artlu = (external | in_map | out_map | decoder | encoder)*
+artlu = (optional-space (external | in_map | out_map | decoder | encoder | internal) optional-space)*
 
 new-line = '\n' | Epsilon
 <colon> = <':'>
@@ -24,7 +24,14 @@ charEscape = <'\\'> ( "a" | "b" | "f" | "n" | "r" | "t" | "v" | '\\' | "\'" | '\
 quote = <"\'"> | <'\"'>
 
 ident = letter { letter | decimalDigit | "_" }
-type = 'ascii' | 'int' | 'byte' | 'bcd' | 'short' | 'long' | 'bigint'
+bcd = <'bcd'> [optional-space <'('> optional-space ident optional-space <')'>]
+endian-type = [optional-space <'('> optional-space (little_endian | big_endian) optional-space <')'>]
+int = <'int'> endian-type
+byte = <'byte'> endian-type
+short = <'short'> endian-type
+long = <'long'> endian-type
+bigint = <'bigint'> endian-type
+type = 'double' | 'float' | 'ascii' | int | byte | bcd | short | long | bigint | 'bytearray' | ident
 
 addition = aplExpression optional-space <'+'> optional-space  aplExpression
 subtraction = aplExpression optional-space <'-'> optional-space  aplExpression
@@ -40,6 +47,7 @@ if-expr = aplBooleanExpression optional-space <'?'> optional-space aplExpression
 aplExpression = fn-call | strLit | intLit | ident | addition | subtraction | multiplication | division | paren-expr | right-shift | bit-and | bit-or | if-expr
 
 equals = aplExpression optional-space <'=='> optional-space aplExpression
+not-equals = aplExpression optional-space <'!='> optional-space aplExpression
 gt = aplExpression optional-space <'>'> optional-space aplExpression
 gte = aplExpression optional-space <'>='> optional-space aplExpression
 lt = aplExpression optional-space <'<'> optional-space aplExpression
@@ -49,36 +57,53 @@ and = aplExpression optional-space <'&&'> optional-space aplExpression
 boolean = 'true' | 'false'
 
 
-aplBooleanExpression = boolean | equals | gt | lt | gte | lte | or | and | fn-call | ident
+aplBooleanExpression = not-equals | boolean | equals | gt | lt | gte | lte | or | and | fn-call | ident
 
 dynamicSizeExpr = aplExpression
 presentIf = <'present'> space <'if'> optional-space <'('> optional-space aplBooleanExpression optional-space <')'>
 dynamic_size = <'dynamic_size'> optional-space <'('> optional-space dynamicSizeExpr optional-space <')'>
 bit_block_static_size = <'static_size'> optional-space <'('> optional-space intLit optional-space <')'>
 bit_blockSize = dynamic_size | bit_block_static_size
-bit_size = <'bit_size'> optional-space <'('> optional-space intLit optional-space <')'>
+bit_size = <'bit_size'> optional-space <'('> optional-space aplExpression optional-space <')'>
 align = <'align'> optional-space <'('> optional-space ('right' | 'left') optional-space <')'>
 padded_with = <'padded_with'> optional-space <'('> optional-space (intLit  | strLit) optional-space <')'>
 terminated_by = <'terminated_by'> optional-space <'('> optional-space (intLit  | strLit) optional-space <')'>
+identified_by = <'identified_by'> optional-space <'('> optional-space (aplBooleanExpression) optional-space <')'>
 base = 'base10' | 'base16'
 encoding = ('float' | 'double' | 'bigdec') | ('byte' | 'short' | 'int' | 'long' | 'bigint' ) optional-space <'('> optional-space base optional-space <')'>
 native_size = <'native_size'> optional-space <'('> optional-space aplExpression optional-space <')'>
 byte_alignment = <'byte_alignment'> <'('> optional-space aplExpression optional-space <')'>
 msb = <'msb'> <'('> optional-space aplExpression optional-space <')'>
 lsb = <'lsb'> <'('> optional-space aplExpression optional-space <')'>
-field-property = bit_size | presentIf | encode_value | align | padded_with | terminated_by | encoding | static_size | native_size | dynamic_size | byte_alignment | msb | lsb
+signed = <'signed'>
+little_endian = <'little_endian'>
+big_endian = <'big_endian'>
+external_only = <'external_only'>
+unsigned = <'unsigned'> 
+field-property = unsigned | external_only | little_endian | big_endian | signed | bit_size | presentIf | encode_value | align | padded_with | terminated_by | encoding | static_size | native_size | dynamic_size | byte_alignment | msb | lsb
 field-properties = field-property (optional-space <','> optional-space field-property)*
 field = type space ident optional-space (semiColon | (<colon> optional-space field-properties optional-space semiColon))
 
-bitBlock = open-curly (optional-space field)* optional-space close-curly
+case = <'case'> optional-space <'('> optional-space aplExpression optional-space <')'> optional-space externalBlock
+cases = (optional-space case)*
+switched_set-block = open-curly optional-space field cases optional-space close-curly
+switched_set_properties = colon optional-space external-properties
+switched_set = <'switched_set'> optional-space  <'('> optional-space ident optional-space <')'> optional-space [switched_set_properties] optional-space switched_set-block
+repeat_block = <'repeat_block'> optional-space <'('> optional-space aplExpression optional-space <')'> optional-space bitBlock
+
+
+bitBlock = open-curly (optional-space (field | repeat_block))* optional-space close-curly
 bitBlock-property = bit_blockSize | presentIf
 bit_block = <'bit_block'> optional-space colon optional-space bitBlock-property (optional-space <','> optional-space bitBlock-property)* optional-space bitBlock
 encode_value = <'encode_value'> optional-space <'('> optional-space aplExpression optional-space <')'>
 static_size = <'static_size'> optional-space <'('> optional-space intLit optional-space <')'>
+block_size = <'block_size'> optional-space <'('> optional-space intLit optional-space <')'>
 
-externalBlock = open-curly (optional-space (field | bit_block))* optional-space close-curly
+externalBlock = open-curly (optional-space (switched_set | field | bit_block))* optional-space close-curly
 externalSize = dynamic_size | static_size
-external = <'external'> space ident optional-space (externalBlock | (colon optional-space (externalSize | terminated_by) optional-space externalBlock)) optional-space
+external-property = externalSize | terminated_by | identified_by
+external-properties = external-property (optional-space <','> optional-space external-property)*
+external = <'external'> space ident optional-space (externalBlock | (colon optional-space external-properties optional-space externalBlock)) optional-space
 
 
 
@@ -100,8 +125,13 @@ out_map = <'out_map'> space ident optional-space colon optional-space
  
 encoder = <'encoder'> optional-space ident optional-space colon optional-space
           <'out_map'> optional-space <'('> optional-space ident optional-space 
-         <');'> 
+         <')'> (optional-space <','> optional-space (block_size | terminated_by))* semiColon 
+
+
+list = <'list'> optional-space <'<'> optional-space internal-type  optional-space <'>'>
+map = <'map'> optional-space <'<'> optional-space internal-type  optional-space <','> optional-space internal-type optional-space <'>'>
          
-          
- 
- 
+internal-type = 'double' | 'float' | 'int' | 'byte' | short | 'long' | 'bigint' | 'bytearray' | ident | list | map
+internal-field = internal-type space ident optional-space semiColon          
+internalBlock = open-curly (optional-space | (optional-space internal-field)*) optional-space  close-curly 
+internal = <'internal'> space ident optional-space internalBlock  

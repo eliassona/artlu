@@ -1,5 +1,6 @@
 (ns artlu.core
-  (:require [instaparse.core :as insta]))
+  (:require [instaparse.core :as insta]
+            [commentclean.core :as comment]))
 
 (defmacro dbg [body]
   `(let [x# ~body]
@@ -44,3 +45,9 @@
 
 (defn ast->clj [ast]
   (insta/transform ast->clj-map ast))
+
+
+(defn parse [text] (-> text comment/clean (parser :start :artlu)))
+
+(defn get-failure [ast] (-> ast insta/get-failure print-str))
+
