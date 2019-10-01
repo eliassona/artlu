@@ -26,7 +26,7 @@ quote = <"\'"> | <'\"'>
 
 ident = letter { letter | decimalDigit | "_" }
 bcd = <'bcd'> [os <'('> os ident os <')'>]
-endian-type = [os <'('> os (little_endian | big_endian) os <')'>]
+endian-type = [os <'('> os (little_endian | big_endian | 'lsb_lo') os <')'>]
 int = <'int'> endian-type
 byte = <'byte'> endian-type
 short = <'short'> endian-type
@@ -54,8 +54,8 @@ gt = aplExpression os <'>'> os aplExpression
 gte = aplExpression os <'>='> os aplExpression
 lt = aplExpression os <'<'> os aplExpression
 lte = aplExpression os <'<='> os aplExpression
-or = aplExpression os <'||'> os aplExpression
-and = aplExpression os <'&&'> os aplExpression
+or = aplBooleanExpression os <'||'> os aplBooleanExpression
+and = aplBooleanExpression os <'&&'> os aplBooleanExpression
 boolean = 'true' | 'false'
 
 
@@ -87,7 +87,7 @@ field-property = element_count | unsigned | external_only | little_endian | big_
 field-properties = field-property (os <','> os field-property)*
 field = type space ident os (semiColon | (<colon> os field-properties os semiColon))
 
-case = <'case'> os <'('> os aplExpression os <')'> os externalBlock
+case = <'case'> os <'('> os aplExpression os <')'> [os colon os 'include_prefix'] os externalBlock
 default = <'default'> os colon os 'include_prefix' os externalBlock
 cases = (os case)* os [default]
 switched_set-block = open-curly (os (field | bit_block))* cases os close-curly
@@ -102,10 +102,10 @@ bit_block = <'bit_block'> os colon os bitBlock-property (os <','> os bitBlock-pr
 encode_value = <'encode_value'> os <'('> os aplExpression os <')'>
 static_size = <'static_size'> os <'('> os intLit os <')'>
 block_size = <'block_size'> os <'('> os intLit os <')'>
-
-externalBlock = open-curly (os (switched_set | field | bit_block))* os close-curly
+set = <'set'> os externalBlock
+externalBlock = open-curly (os (set | switched_set | field | bit_block))* os close-curly
 externalSize = dynamic_size | static_size
-external-property = externalSize | terminated_by | identified_by | padded_with
+external-property = 'ignore_trailing_data' | externalSize | terminated_by | identified_by | padded_with
 external-properties = external-property (os <','> os external-property)*
 external = <'external'> space ident [space 'sequential'] os (externalBlock | (colon os external-properties os externalBlock)) os
 
@@ -116,9 +116,11 @@ ext-int-mapping = ('external' os ext-int-arg os <','> os internal-mapping os ext
                   (internal-mapping os ext-int-arg os <','> os 'external' os ext-int-arg)
 
 
+field-mapping = (('i:' os ident space <'and'> space 'e:' os ident) | ('e:' os ident space <'and'> space 'i:' os ident)) os semiColon
+
 in_map = <'in_map'> space ident os colon os 
          ext-int-mapping
-         os open-curly os 'automatic;' os close-curly  
+         os open-curly os (('automatic' [os colon os 'use_external_names'] semiColon) | (os field-mapping)*) os close-curly  
 
 
 decoder-in_map = <'in_map'> os <'('> os ident os <')'>
@@ -132,7 +134,7 @@ decoder = <'decoder'> os ident os ((colon os decoders-in_map) | decoder-block)
 
 out_map = <'out_map'> space ident os colon os 
          ext-int-mapping
-         os open-curly os 'automatic;' os close-curly  
+         os open-curly os (('automatic;') | (os field-mapping)*) os close-curly  
  
 encoder-out_map = <'out_map'> os <'('> os ident os <')'>
 encoders-out_map = encoder-out_map (os <','> os encoder-out_map)* os semiColon
