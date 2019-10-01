@@ -1,4 +1,4 @@
-artlu = (optional-space (external | in_map | out_map | decoder | encoder | internal) optional-space)*
+artlu = (optional-space (external | in_map | out_map | decoder | encoder | internal | event) optional-space)*
 
 new-line = '\n' | Epsilon
 <colon> = <':'>
@@ -11,7 +11,8 @@ close-curly = <'};'>
 decimalDigit = #'[0-9]'
 octalDigit   = #'[0-7]'
 hexDigit     = #'[0-9a-fA-F]'
-intLit     = decimalLit | octalLit | hexLit
+sign = '+' | '-'
+intLit     = [sign optional-space] (decimalLit | octalLit | hexLit)
 decimalLit = #'[1-9]' { decimalDigit }
 octalLit   = "0" { octalDigit }
 hexLit     = <"0"> <( "x" | "X" )> hexDigit { hexDigit }
@@ -44,7 +45,8 @@ bit-or = aplExpression optional-space <'|'> optional-space aplExpression
 paren-expr = <'('> optional-space aplExpression optional-space <')'>
 fn-call = ident optional-space <'('> (optional-space [aplExpression] optional-space) (optional-space <','> optional-space aplExpression optional-space)* <')'>
 if-expr = aplBooleanExpression optional-space <'?'> optional-space aplExpression optional-space <colon> optional-space aplExpression
-aplExpression = fn-call | strLit | intLit | ident | addition | subtraction | multiplication | division | paren-expr | right-shift | bit-and | bit-or | if-expr
+type-cast = <'('> optional-space ident optional-space <')'> optional-space aplExpression
+aplExpression = fn-call | strLit | intLit | ident | addition | subtraction | multiplication | division | paren-expr | right-shift | bit-and | bit-or | if-expr | type-cast
 
 equals = aplExpression optional-space <'=='> optional-space aplExpression
 not-equals = aplExpression optional-space <'!='> optional-space aplExpression
@@ -85,8 +87,9 @@ field-properties = field-property (optional-space <','> optional-space field-pro
 field = type space ident optional-space (semiColon | (<colon> optional-space field-properties optional-space semiColon))
 
 case = <'case'> optional-space <'('> optional-space aplExpression optional-space <')'> optional-space externalBlock
-cases = (optional-space case)*
-switched_set-block = open-curly optional-space field cases optional-space close-curly
+default = <'default'> optional-space colon optional-space 'include_prefix' optional-space externalBlock
+cases = (optional-space case)* optional-space [default]
+switched_set-block = open-curly (optional-space (field | bit_block))* cases optional-space close-curly
 switched_set_properties = colon optional-space external-properties
 switched_set = <'switched_set'> optional-space  <'('> optional-space ident optional-space <')'> optional-space [switched_set_properties] optional-space switched_set-block
 repeat_block = <'repeat_block'> optional-space <'('> optional-space aplExpression optional-space <')'> optional-space bitBlock
@@ -101,9 +104,9 @@ block_size = <'block_size'> optional-space <'('> optional-space intLit optional-
 
 externalBlock = open-curly (optional-space (switched_set | field | bit_block))* optional-space close-curly
 externalSize = dynamic_size | static_size
-external-property = externalSize | terminated_by | identified_by
+external-property = externalSize | terminated_by | identified_by | padded_with
 external-properties = external-property (optional-space <','> optional-space external-property)*
-external = <'external'> space ident optional-space (externalBlock | (colon optional-space external-properties optional-space externalBlock)) optional-space
+external = <'external'> space ident [space 'sequential'] optional-space (externalBlock | (colon optional-space external-properties optional-space externalBlock)) optional-space
 
 
 
@@ -113,9 +116,13 @@ in_map = <'in_map'> space ident optional-space colon optional-space
          optional-space <'('> optional-space ident optional-space <')'>
          optional-space open-curly optional-space 'automatic;' optional-space close-curly  
 
-decoder = <'decoder'> optional-space ident optional-space colon optional-space
-          <'in_map'> optional-space <'('> optional-space ident optional-space 
-         <');'>  
+
+decoder-in_map = <'in_map'> optional-space <'('> optional-space ident optional-space <')'>
+decoders-in_map = decoder-in_map (optional-space <','> optional-space decoder-in_map)* optional-space semiColon
+decoder-ref = <'decoder'> space ident [space '*'] optional-space semiColon
+decoder-refs = (optional-space decoder-ref)*
+decoder-block = open-curly decoder-refs optional-space close-curly
+decoder = <'decoder'> optional-space ident optional-space ((colon optional-space decoders-in_map) | decoder-block)  
 
 out_map = <'out_map'> space ident optional-space colon optional-space 
          <'external'> optional-space <'('> optional-space ident optional-space 
@@ -135,3 +142,4 @@ internal-type = 'double' | 'float' | 'int' | 'byte' | short | 'long' | 'bigint' 
 internal-field = internal-type space ident optional-space semiColon          
 internalBlock = open-curly (optional-space | (optional-space internal-field)*) optional-space  close-curly 
 internal = <'internal'> space ident optional-space internalBlock  
+event = <'event'> space ident optional-space internalBlock  
