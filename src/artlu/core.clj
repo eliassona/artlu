@@ -1,4 +1,5 @@
 (ns artlu.core
+  (:use [clojure.pprint])
   (:require [instaparse.core :as insta]
             [commentclean.core :as comment]))
 
@@ -12,7 +13,18 @@
 
 
 
+(defn to-map [type]
+  (fn [name & args] (with-meta {name args} {:type type})))
 
+(defn merge-maps [& args]
+  (reduce 
+    (fn [acc m] 
+      (let [type (-> m meta :type)]
+        (update acc type  #(merge % m))        
+        ))
+    {} args)
+       
+  )
 
 (def ast->clj-map
   {:charValue identity
@@ -35,19 +47,36 @@
    :right-shift (fn [& args] `(bit-shift-right ~@args))
    :left-shift (fn [& args] `(bit-shift-left ~@args))
    :equals (fn [& args] `(= ~@args))
+   :not-equals (fn [& args] `(not= ~@args))
    :gt (fn [& args] `(> ~@args))
    :gte (fn [& args] `(>= ~@args))
    :lt (fn [& args] `(< ~@args))
    :lte (fn [& args] `(<= ~@args))
    :if-expr (fn [condition if-value else-value] `(if ~condition ~if-value ~else-value))
    :ident (fn [& args] (apply str args))
+   :dynamicSizeExpr identity
+   :external (to-map :external)
+   :in_map (to-map :in_map)
+   :out_map (to-map :out_map)
+   :decoder (to-map :decoder)
+   :encoder (to-map :encoder)
+   :artlu merge-maps 
    })
 
 (defn ast->clj [ast]
   (insta/transform ast->clj-map ast))
 
 
-(defn parse [text] (-> text comment/clean (parser :start :artlu)))
+(defn parse [text] (-> text comment/clean (parser :start :artlu) ast->clj))
 
 (defn get-failure [ast] (-> ast insta/get-failure print-str))
+
+(defn decode [ast decoder-name]
+  (dbg ast)
+  (fn [data]
+    [{"recordLength" (int 25), 
+      "arrayLength" (byte 20), 
+      "arrayField" (byte-array (range 1 21))}]))
+
+
 

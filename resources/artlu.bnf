@@ -83,7 +83,7 @@ big_endian = <'big_endian'>
 external_only = <'external_only'>
 unsigned = <'unsigned'> 
 element_count = <'element_count'> <'('> os aplExpression os <')'>
-field-property = element_count | unsigned | external_only | little_endian | big_endian | signed | bit_size | presentIf | encode_value | align | padded_with | terminated_by | encoding | static_size | native_size | dynamic_size | byte_alignment | msb | lsb | 'optional'
+<field-property> = element_count | unsigned | external_only | little_endian | big_endian | signed | bit_size | presentIf | encode_value | align | padded_with | terminated_by | encoding | static_size | native_size | dynamic_size | byte_alignment | msb | lsb | 'optional'
 field-properties = field-property (os <','> os field-property)*
 field = type space ident os (semiColon | (<colon> os field-properties os semiColon))
 
@@ -103,17 +103,15 @@ encode_value = <'encode_value'> os <'('> os aplExpression os <')'>
 static_size = <'static_size'> os <'('> os intLit os <')'>
 block_size = <'block_size'> os <'('> os aplExpression os <')'>
 set = <'set'> [os colon os external-properties] os externalBlock
-externalBlock = open-curly (os (set | switched_set | field | bit_block))* os close-curly
-externalSize = dynamic_size | static_size
-external-property = 'ignore_trailing_data' | externalSize | terminated_by | identified_by | padded_with
+externalBlock = <open-curly> (os (set | switched_set | field | bit_block))* os <close-curly>
+<externalSize> = dynamic_size | static_size
+<external-property> = 'ignore_trailing_data' | externalSize | terminated_by | identified_by | padded_with
 external-properties = external-property (os <','> os external-property)*
 external = <'external'> space ident [space 'sequential'] os (externalBlock | (colon os external-properties os externalBlock)) os
 
 internal-mapping = 'internal' | 'target_internal' 
 emit-field = ('emit_field' os <'('> os ident os <','> os ident os <')'>)
 ext-int-arg = <'('> os ident os <')'>
-test = ('external' os ext-int-arg os <','> os ((internal-mapping os ext-int-arg) | emit-field)) |
-                  (((internal-mapping os ext-int-arg) | emit-field) os <','> os 'external' os ext-int-arg)
 ext-int-mapping = (('external' | internal-mapping) ext-int-arg) | emit-field
 ext-int-mappings = ext-int-mapping (os <','> os ext-int-mapping)*
 
@@ -125,7 +123,7 @@ automatic-block = open-curly (os using)* os <'}'>
 
 in_map = <'in_map'> space ident os colon os 
          ext-int-mappings
-         os open-curly os (('automatic' [os colon os 'use_external_names'] [space automatic-block os] (semiColon os)) | (os field-mapping)*) os close-curly  
+         os <open-curly> os (('automatic' [os colon os 'use_external_names'] [space automatic-block os] (semiColon os)) | (os field-mapping)*) os <close-curly>  
 
 
 decoder-in_map = <'in_map'> os <'('> os ident os <')'>
@@ -139,7 +137,7 @@ decoder = <'decoder'> os ident os ((colon os decoders-in_map) | decoder-block)
 
 out_map = <'out_map'> space ident os colon os 
          ext-int-mappings
-         os open-curly os (('automatic;') | (os field-mapping)*) os close-curly  
+         os <open-curly> os (('automatic;') | (os field-mapping)*) os <close-curly>  
  
 encoder-out_map = <'out_map'> os <'('> os ident os <')'>
 encoders-out_map = encoder-out_map (os <','> os encoder-out_map)* os semiColon
