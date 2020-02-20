@@ -96,7 +96,7 @@ switched_set = <'switched_set'> os  <'('> os ident os <')'> os [switched_set_pro
 repeat_block = <'repeat_block'> os <'('> os aplExpression os <')'> os bitBlock
 
 
-bitBlock = open-curly (os (field | repeat_block))* os close-curly
+bitBlock = <open-curly> (os (field | repeat_block))* os <close-curly>
 bitBlock-property = bit_blockSize | presentIf
 bit_block = <'bit_block'> os colon os bitBlock-property (os <','> os bitBlock-property)* os bitBlock
 encode_value = <'encode_value'> os <'('> os aplExpression os <')'>

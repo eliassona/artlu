@@ -54,11 +54,22 @@
    "long" 64
    })
 
-(defn field-of [type name] 
+(defn field-with-arg-of [type name bit-size signed]
   {name {:encode `(fn [value# bit-codec# context#]  
-                    (~(add-encode-name-of type) bit-codec# value# ~(type->bit-size type) 0 false)), 
+                    (~(add-encode-name-of type) bit-codec# value# ~bit-size 0 ~signed)), 
          :decode `(fn [ba# bit-offset# context#] 
-                    (~(decode-name-of type) ba# bit-offset# ~(type->bit-size type) false))}})
+                    (~(decode-name-of type) ba# bit-offset# ~bit-size ~signed))}})
+
+(defn spec->bit-size [m]
+  (cond
+    (contains? m :bit_size) (:bit_size m)
+    (contains? m :static_size) (* 8 (:static_size m))))
+
+(defn field-of 
+  ([type name args] 
+    (field-with-arg-of type name (spec->bit-size args) (contains? args :signed))) 
+  ([type name] 
+    (field-with-arg-of type name (type->bit-size type) false)))
 
 (def ast->clj-map
   {:charValue identity
@@ -100,6 +111,7 @@
    :type identity
    :field field-of
    :externalBlock (fn [& args] (apply merge args))
+   :field-properties (fn [& args] (into {} (map (fn [[v1 v2]] (if (nil? v2) [v1 v1] [v1 v2])) args)))
    :artlu merge-maps 
    })
 
